@@ -1,0 +1,7 @@
+{
+  "name": "Copy of HiramKo",
+  "description": "A comprehensive P2P rental ecosystem for gadgets, tools, and more with integrated delivery and verification.",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}
