@@ -22,7 +22,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
     const [activeRentals, setActiveRentals] = useState<Rental[]>([]);
 
     // Helper for local storage access
-    const getLocalStorage = <T>(key: string, defaultValue: T): T => {
+    const getLocalStorage = <T extends unknown>(key: string, defaultValue: T): T => {
         const stored = localStorage.getItem(key);
         return stored ? JSON.parse(stored) : defaultValue;
     };
@@ -30,51 +30,51 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
     const fetchDashboardData = async () => {
         if (user) {
             const listings = await api.getMyItems(user.id);
-        setMyListings(listings);
+            setMyListings(listings);
 
-        // Re-fetch all rentals to ensure we have latest from localStorage
-        const allRentals = getLocalStorage<Rental[]>('hk_rentals', MOCK_RENTALS);
+            // Re-fetch all rentals to ensure we have latest from localStorage
+            const allRentals = getLocalStorage<Rental[]>('hk_rentals', MOCK_RENTALS);
             setActiveRentals(allRentals.filter(r => r.renter.id === user.id || r.item.owner.id === user.id));
         }
     };
 
     useEffect(() => {
-            fetchDashboardData();
+        fetchDashboardData();
     }, [user, location.search]);
 
     useEffect(() => {
         const params = new URLSearchParams(location.search);
         if (params.get('payment_success') === 'true') {
             const rentalId = params.get('rentalId');
-        alert(`Payment Verified! Rental ${rentalId} is now Pending Owner Approval.`);
-        navigate('/dashboard', {replace: true });
+            alert(`Payment Verified! Rental ${rentalId} is now Pending Owner Approval.`);
+            navigate('/dashboard', { replace: true });
         }
     }, [location, navigate]);
 
-        if (!user) {
+    if (!user) {
         return <Login onLogin={onLogin} />;
     }
 
-        // Filter items owned by user (mock filter using ID if matching, otherwise simulate empty or mock)
-        // const myListings = MOCK_ITEMS.filter(i => i.owner.id === user.id);
+    // Filter items owned by user (mock filter using ID if matching, otherwise simulate empty or mock)
+    // const myListings = MOCK_ITEMS.filter(i => i.owner.id === user.id);
 
-        // List of rentals is now stateful from API/localStorage
-        // const [activeRentals, setActiveRentals] = useState(MOCK_RENTALS.filter(r => r.renter.id === user.id || r.item.owner.id === user.id));
+    // List of rentals is now stateful from API/localStorage
+    // const [activeRentals, setActiveRentals] = useState(MOCK_RENTALS.filter(r => r.renter.id === user.id || r.item.owner.id === user.id));
 
-        // Review Modal State
-        const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
-        const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
-        const [reviewRating, setReviewRating] = useState(5);
-        const [reviewComment, setReviewComment] = useState('');
+    // Review Modal State
+    const [isReviewModalOpen, setIsReviewModalOpen] = useState(false);
+    const [selectedRentalId, setSelectedRentalId] = useState<string | null>(null);
+    const [reviewRating, setReviewRating] = useState(5);
+    const [reviewComment, setReviewComment] = useState('');
 
     const handleConfirmReturn = async (rentalId: string) => {
         if (!confirm("Confirm that the item has been returned in good condition? This will release the escrowed funds.")) return;
         const result = await api.confirmReturn(rentalId, 5, false);
         if (result.success) {
             alert("Return confirmed! Funds released. Please leave a review.");
-        // Trigger Review Modal immediately for Owner
-        setSelectedRentalId(rentalId);
-        setIsReviewModalOpen(true);
+            // Trigger Review Modal immediately for Owner
+            setSelectedRentalId(rentalId);
+            setIsReviewModalOpen(true);
             // Ideally trigger refresh here
         }
     };
@@ -92,10 +92,10 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
 
         await api.submitReview({
             rentalId: selectedRentalId,
-        reviewerId: user.id,
-        targetId: targetId,
-        rating: reviewRating,
-        comment: reviewComment
+            reviewerId: user.id,
+            targetId: targetId,
+            rating: reviewRating,
+            comment: reviewComment
         });
 
         alert("Review submitted! Thank you.");
@@ -108,8 +108,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
         const reason = prompt("Please describe the issue (e.g. Item damaged, Late return):");
         if (reason) {
             await api.fileDispute(rentalId, reason);
-        alert("Dispute filed. Admin will review.");
-        fetchDashboardData();
+            alert("Dispute filed. Admin will review.");
+            fetchDashboardData();
         }
     };
 
@@ -127,7 +127,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
         fetchDashboardData();
     };
 
-        return (
+    return (
         <div className="min-h-screen bg-slate-950 pt-24 pb-12">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -474,7 +474,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                 </div>
             )}
         </div >
-        );
+    );
 };
 
-        export default Dashboard;
+export default Dashboard;

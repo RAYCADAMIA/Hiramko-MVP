@@ -1,0 +1,110 @@
+﻿
+> hiramko-app@0.0.0 build
+> vite build
+
+[36mvite v5.4.21 [32mbuilding for production...[36m[39m
+transforming...
+[32mΓ£ô[39m 21 modules transformed.
+node.exe : [31mx[39m 
+Build failed in 2.13s
+At line:1 char:1
++ & "C:\Program 
+Files\nodejs/node.exe" 
+"C:\Program 
+Files\nodejs/node_mo ...
++ ~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~
+    + CategoryInfo          
+    : NotSpecified: ([31m  
+  x[39m Build failed in    
+ 2.13s:String) [], Remot    
+eException
+    + FullyQualifiedErrorId 
+    : NativeCommandError
+ 
+[31merror during build:
+[31m[vite:esbuild] 
+Transform failed with 2 
+errors:
+C:/Users/Acer/Desktop/Hriamk
+o - D/pages/Dashboard.tsx:25
+:66: ERROR: The character 
+">" is not valid inside a 
+JSX element
+C:/Users/Acer/Desktop/Hriamk
+o - 
+D/pages/Dashboard.tsx:26:8: 
+ERROR: Unexpected 
+"const"[31m
+file: [36mC:/Users/Acer/Des
+ktop/Hriamko - D/pages/Dashb
+oard.tsx:25:66[31m
+[33m
+[33mThe character ">" is 
+not valid inside a JSX 
+element[33m
+23 |  
+24 |      // Helper for 
+local storage access
+25 |      const 
+getLocalStorage = <T>(key: 
+string, defaultValue: T): T 
+=> {
+   |                        
+                            
+                ^
+26 |          const stored 
+= localStorage.getItem(key);
+27 |          return stored 
+? JSON.parse(stored) : 
+defaultValue;
+
+[33mUnexpected "const"[33m
+24 |      // Helper for 
+local storage access
+25 |      const 
+getLocalStorage = <T>(key: 
+string, defaultValue: T): T 
+=> {
+26 |          const stored 
+= localStorage.getItem(key);
+   |          ^
+27 |          return stored 
+? JSON.parse(stored) : 
+defaultValue;
+28 |      };
+[31m
+    at failureErrorWithLog (
+C:\Users\Acer\Desktop\Hriamk
+o - D\node_modules\esbuild\l
+ib\main.js:1472:15)
+    at C:\Users\Acer\Desktop
+\Hriamko - D\node_modules\es
+build\lib\main.js:755:50
+    at responseCallbacks.<co
+mputed> (C:\Users\Acer\Deskt
+op\Hriamko - D\node_modules\
+esbuild\lib\main.js:622:9)
+    at handleIncomingPacket 
+(C:\Users\Acer\Desktop\Hriam
+ko - D\node_modules\esbuild\
+lib\main.js:677:12)
+    at 
+Socket.readFromStdout (C:\Us
+ers\Acer\Desktop\Hriamko - D
+\node_modules\esbuild\lib\ma
+in.js:600:7)
+    at Socket.emit 
+(node:events:508:28)
+    at addChunk (node:intern
+al/streams/readable:559:12)
+    at readableAddChunkPushB
+yteMode (node:internal/strea
+ms/readable:510:3)
+    at Readable.push (node:i
+nternal/streams/readable:390
+:5)
+    at Pipe.onStreamRead (no
+de:internal/stream_base_comm
+ons:189:23)[39m
