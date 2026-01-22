@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { api } from '../services/api';
+import { getItemById, updateItem } from '../services/items';
 import { supabase } from '../services/supabase';
 import { Item } from '../types';
 import { ChevronLeft, Save, AlertCircle } from 'lucide-react';
@@ -19,7 +19,7 @@ const EditItem: React.FC = () => {
 
     useEffect(() => {
         if (id) {
-            api.getItemById(id).then(setItem);
+            getItemById(id).then(setItem);
         }
     }, [id]);
 
@@ -40,12 +40,14 @@ const EditItem: React.FC = () => {
 
         try {
             if (!id) return;
-            await api.updateItem(id, {
+            const { error } = await updateItem(id, {
                 title,
                 description,
                 pricePerDay: Number(price),
                 depositAmount: Number(deposit)
             });
+
+            if (error) throw error;
 
             alert('Item updated successfully!');
             navigate(`/item/${id}`);

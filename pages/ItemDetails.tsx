@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { MapPin, ShieldCheck, Calendar, MessageCircle, Star, AlertTriangle, ChevronLeft, ChevronRight, Truck, Bike, Hand, Ban, CalendarCheck, MessageSquare } from 'lucide-react';
 import { UserType, Item, LogisticsType } from '../types';
 import { User } from '../types';
-import { api } from '../services/api';
+import { getItemById } from '../services/items';
 
 interface ItemDetailsProps {
   user: User | null;
@@ -67,10 +67,9 @@ const ItemDetails: React.FC<ItemDetailsProps> = ({ user, onShowToast, onToggleCh
 
     if (id) {
       setLoading(true);
-      api.getItemById(id)
+      getItemById(id)
         .then(data => {
           if (isMounted) {
-            console.log("Fetched Item Data:", data);
             setItem(data);
           }
         })

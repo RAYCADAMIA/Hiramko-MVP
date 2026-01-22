@@ -5,6 +5,11 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, Star, Shield, Plus, Calendar, Settings, LogOut, Bell, CheckCircle, AlertCircle, Info, HelpCircle, Zap, HelpCircle as Help } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
 import Login from './Login';
+import { getItemsByUser, updateItem, deleteItem } from '../services/items';
+import { getRentalsByUser, updateRentalStatus } from '../services/rentals';
+import { updateProfile } from '../services/user';
+import { getNotifications, markAsRead } from '../services/notifications';
+import { Notification } from '../types';
 import { api } from '../services/api';
 
 interface DashboardProps {
@@ -20,21 +25,26 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
     const [showEscrowTooltip, setShowEscrowTooltip] = useState(false);
     const [myListings, setMyListings] = useState<Item[]>([]);
     const [activeRentals, setActiveRentals] = useState<Rental[]>([]);
-
-    // Helper for local storage access
-    const getLocalStorage = <T extends unknown>(key: string, defaultValue: T): T => {
-        const stored = localStorage.getItem(key);
-        return stored ? JSON.parse(stored) : defaultValue;
-    };
+    const [notifications, setNotifications] = useState<Notification[]>([]);
+    const [loading, setLoading] = useState(true);
 
     const fetchDashboardData = async () => {
         if (user) {
-            const listings = await api.getMyItems(user.id);
-            setMyListings(listings);
+            setLoading(true);
+            try {
+                const listings = await getItemsByUser(user.id);
+                setMyListings(listings);
 
-            // Re-fetch all rentals to ensure we have latest from localStorage
-            const allRentals = getLocalStorage<Rental[]>('hk_rentals', MOCK_RENTALS);
-            setActiveRentals(allRentals.filter(r => r.renter.id === user.id || r.item.owner.id === user.id));
+                const rentals = await getRentalsByUser(user.id);
+                setActiveRentals(rentals);
+
+                const notifs = await getNotifications(user.id);
+                setNotifications(notifs);
+            } catch (error) {
+                console.error("Error fetching dashboard data:", error);
+            } finally {
+                setLoading(false);
+            }
         }
     };
 
@@ -394,35 +404,54 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                                 <h2 className="text-lg font-bold text-white flex items-center gap-2">
                                     <Bell className="w-5 h-5 text-yellow-400" /> Notifications
                                 </h2>
-                                <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">3</span>
+                                {notifications.filter(n => !n.read).length > 0 && (
+                                    <span className="bg-red-500 text-white text-xs font-bold px-2 py-0.5 rounded-full">
+                                        {notifications.filter(n => !n.read).length}
+                                    </span>
+                                )}
                             </div>
 
-                            <div className="space-y-4">
-                                {MOCK_NOTIFICATIONS.map(notif => (
-                                    <Link
-                                        to="#my-listings"
-                                        key={notif.id}
-                                        className={`block p-4 rounded-xl border transition hover:border-cyan-500/30 cursor-pointer ${notif.read ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-800/50 border-slate-700'}`}
-                                    >
-                                        <div className="flex gap-3">
-                                            <div className="mt-1">
-                                                {notif.type === 'success' && <CheckCircle className="w-4 h-4 text-green-400" />}
-                                                {notif.type === 'warning' && <AlertCircle className="w-4 h-4 text-yellow-400" />}
-                                                {notif.type === 'info' && <Info className="w-4 h-4 text-blue-400" />}
+                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                                {notifications.length === 0 ? (
+                                    <p className="text-center text-slate-500 py-8 text-sm italic">No notifications yet.</p>
+                                ) : (
+                                    notifications.map(notif => (
+                                        <Link
+                                            to={notif.link || "#"}
+                                            key={notif.id}
+                                            onClick={() => {
+                                                if (!notif.read) markAsRead(notif.id);
+                                            }}
+                                            className={`block p-4 rounded-xl border transition hover:border-cyan-500/30 cursor-pointer ${notif.read ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-800/50 border-slate-700 shadow-lg shadow-cyan-900/5 border-cyan-500/20'}`}
+                                        >
+                                            <div className="flex gap-3">
+                                                <div className="mt-1">
+                                                    {notif.type === 'SUCCESS' && <CheckCircle className="w-4 h-4 text-green-400" />}
+                                                    {(notif.type === 'ALERT' || notif.type === 'RENTAL_REQUEST') && <AlertCircle className="w-4 h-4 text-yellow-400" />}
+                                                    {notif.type === 'INFO' && <Info className="w-4 h-4 text-blue-400" />}
+                                                </div>
+                                                <div>
+                                                    <h4 className={`text-sm font-bold ${notif.read ? 'text-slate-400' : 'text-white'}`}>{notif.title}</h4>
+                                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">{notif.message}</p>
+                                                    <p className="text-[10px] text-slate-500 mt-2 font-medium">{notif.time}</p>
+                                                </div>
                                             </div>
-                                            <div>
-                                                <h4 className={`text-sm font-bold ${notif.read ? 'text-slate-400' : 'text-white'}`}>{notif.title}</h4>
-                                                <p className="text-xs text-slate-400 mt-1 leading-relaxed">{notif.message}</p>
-                                                <p className="text-[10px] text-slate-500 mt-2">{notif.time}</p>
-                                            </div>
-                                        </div>
-                                    </Link>
-                                ))}
+                                        </Link>
+                                    ))
+                                )}
                             </div>
 
-                            <button className="w-full mt-6 py-2 text-xs font-medium text-slate-400 hover:text-white transition border-t border-slate-800">
-                                View All Notifications
-                            </button>
+                            {notifications.length > 0 && notifications.some(n => !n.read) && (
+                                <button
+                                    onClick={async () => {
+                                        await Promise.all(notifications.filter(n => !n.read).map(n => markAsRead(n.id)));
+                                        fetchDashboardData();
+                                    }}
+                                    className="w-full mt-6 py-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition border-t border-slate-800/50 uppercase tracking-wider"
+                                >
+                                    Mark All as Read
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>

@@ -6,7 +6,7 @@ import { Sparkles, Camera, Loader2, UploadCloud, Truck, Bike, Hand, Ban, Calenda
 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { api } from '../services/api';
+import { createItem, uploadItemImage } from '../services/items';
 
 interface PostItemProps {
   onShowToast?: (message: string) => void;
@@ -63,26 +63,30 @@ const PostItem: React.FC<PostItemProps> = ({ onShowToast }) => {
 
     setLoading(true);
     try {
-      let imageUrl = 'https://images.unsplash.com/photo-1531297461136-82lw9z1w1e1d'; // Default fallback
+      let imageUrl = 'https://images.unsplash.com/photo-1542382257-80dedb725088?q=80&w=1000';
 
       if (imageFile) {
-        imageUrl = await api.uploadImage(imageFile, 'item-images');
+        imageUrl = await uploadItemImage(imageFile, user.id);
       }
 
-      await api.createItem({
+      const { data, error } = await createItem({
         title,
         description,
-        category: category as ItemCategory,
-        pricePerDay: Number(price),
-        condition: condition as any,
+        category,
+        price_per_day: Number(price),
+        owner_id: user.id,
+        condition,
         images: [imageUrl],
         location: user.location || 'Davao City',
-        depositAmount: Number(price) * 0.5,
-        logisticsType,
-        allowSurvey
-      }, user);
+        deposit_amount: Number(price) * 0.5, // Default 50% deposit
+        logistics_type: logisticsType,
+        allow_survey: allowSurvey,
+        is_available: true
+      });
 
-      if (onShowToast) onShowToast('Item listed successfully!');
+      if (error) throw error;
+
+      if (onShowToast) onShowToast('Item listed successfully! It is now live.');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error creating item:', error);

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, PlusCircle, Menu, X, Package, MessageSquare, User as UserIcon, Bell } from 'lucide-react';
-import { MOCK_NOTIFICATIONS } from '../constants';
-import { User } from '../types';
+import { getNotifications, markAsRead } from '../services/notifications';
+import { User, Notification, NotificationType } from '../types';
 import Logo from './Logo';
 
 interface NavbarProps {
@@ -16,6 +16,24 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
   const [navSearchTerm, setNavSearchTerm] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  useEffect(() => {
+    const fetchNotifs = async () => {
+      if (user) {
+        const notifs = await getNotifications(user.id);
+        setNotifications(notifs);
+      }
+    };
+    fetchNotifs();
+  }, [user]);
+
+  const markAllAsRead = async () => {
+    if (!user) return;
+    await Promise.all(notifications.filter(n => !n.read).map(n => markAsRead(n.id)));
+    const updated = await getNotifications(user.id);
+    setNotifications(updated);
+  };
   const searchInputRef = useRef<HTMLInputElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -148,31 +166,55 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
                 className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/30 transition-all relative"
               >
                 <Bell className="w-4.5 h-4.5" />
-                {user && <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-slate-900 animate-pulse"></span>}
+                {user && notifications.some(n => !n.read) && (
+                  <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border border-slate-900 animate-pulse"></span>
+                )}
               </button>
 
               {isNotifOpen && user && (
                 <div className="absolute right-0 mt-2 w-80 bg-slate-900 border border-slate-800 rounded-xl shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-200">
                   <div className="p-3 border-b border-slate-800 flex justify-between items-center">
                     <h3 className="font-bold text-white text-sm">Notifications</h3>
-                    <span className="text-xs text-cyan-400 cursor-pointer hover:underline">Mark all read</span>
-                  </div>
-                  <div className="max-h-64 overflow-y-auto">
-                    {MOCK_NOTIFICATIONS.map(notif => (
-                      <Link
-                        to="/dashboard"
-                        key={notif.id}
-                        className="block p-3 hover:bg-slate-800/50 transition border-b border-slate-800/50 last:border-0 cursor-pointer"
-                        onClick={() => setIsNotifOpen(false)}
+                    {notifications.some(n => !n.read) && (
+                      <span
+                        onClick={markAllAsRead}
+                        className="text-[10px] text-cyan-400 cursor-pointer hover:underline uppercase font-bold tracking-widest"
                       >
-                        <p className="text-sm text-slate-300 font-medium line-clamp-1">{notif.title}</p>
-                        <p className="text-xs text-slate-500 mt-1 line-clamp-2">{notif.message}</p>
-                        <p className="text-[10px] text-slate-600 mt-2">{new Date(notif.createdAt).toLocaleDateString()}</p>
-                      </Link>
-                    ))}
+                        Mark all read
+                      </span>
+                    )}
+                  </div>
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar">
+                    {notifications.length === 0 ? (
+                      <div className="p-8 text-center">
+                        <p className="text-xs text-slate-500 italic">No notifications yet</p>
+                      </div>
+                    ) : (
+                      notifications.map(notif => (
+                        <Link
+                          to={notif.link || "/dashboard"}
+                          key={notif.id}
+                          className={`block p-4 hover:bg-slate-800/50 transition border-b border-slate-800/50 last:border-0 cursor-pointer ${notif.read ? 'opacity-60' : 'bg-cyan-500/[0.02]'}`}
+                          onClick={async () => {
+                            setIsNotifOpen(false);
+                            if (!notif.read) {
+                              await markAsRead(notif.id);
+                              setNotifications(prev => prev.map(n => n.id === notif.id ? { ...n, read: true } : n));
+                            }
+                          }}
+                        >
+                          <div className="flex justify-between items-start gap-2">
+                            <p className={`text-sm ${notif.read ? 'text-slate-400' : 'text-white font-bold'} line-clamp-1`}>{notif.title}</p>
+                            {!notif.read && <div className="w-2 h-2 bg-cyan-500 rounded-full mt-1 flex-shrink-0"></div>}
+                          </div>
+                          <p className="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">{notif.message}</p>
+                          <p className="text-[10px] text-slate-600 mt-2 font-medium">{notif.time}</p>
+                        </Link>
+                      ))
+                    )}
                   </div>
                   <div className="p-2 text-center border-t border-slate-800 bg-slate-900/50">
-                    <Link to="/dashboard" className="text-xs text-cyan-400 hover:text-cyan-300 font-medium">View Dashboard</Link>
+                    <Link to="/dashboard" onClick={() => setIsNotifOpen(false)} className="text-[10px] text-cyan-400 hover:text-cyan-300 font-bold uppercase tracking-widest">View Dashboard</Link>
                   </div>
                 </div>
               )}

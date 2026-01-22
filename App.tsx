@@ -25,6 +25,8 @@ import Logo from './components/Logo';
 
 import Toast from './components/Toast';
 import ScrollToTop from './components/ScrollToTop';
+import ProtectedRoute from './components/ProtectedRoute';
+import { Navigate } from 'react-router-dom';
 
 const App: React.FC = () => {
   // Auth State controlled by Context
@@ -88,17 +90,17 @@ const App: React.FC = () => {
             <Route path="/" element={<Home />} />
             <Route path="/search" element={<Search user={user} onShowToast={showToast} />} />
             <Route path="/item/:id" element={<ItemDetails user={user} onShowToast={showToast} onToggleChat={() => setIsChatOpen(!isChatOpen)} />} />
-            <Route path="/checkout/:id" element={<Checkout />} />
-            <Route path="/item/:id/edit" element={<EditItem />} />
-            <Route path="/post" element={<PostItem onShowToast={showToast} />} />
+            <Route path="/checkout/:id" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+            <Route path="/item/:id/edit" element={<ProtectedRoute><EditItem /></ProtectedRoute>} />
+            <Route path="/post" element={<ProtectedRoute><PostItem onShowToast={showToast} /></ProtectedRoute>} />
 
-            <Route path="/login" element={<Login />} />
-            <Route path="/messages" element={<Messages user={user} />} />
-            <Route path="/dashboard" element={<Dashboard user={user} onLogin={handleLogin} onLogout={handleLogout} />} />
-            <Route path="/admin" element={<AdminDashboard user={user} onLogin={handleLogin} />} />
+            <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login />} />
+            <Route path="/messages" element={<ProtectedRoute><Messages user={user} /></ProtectedRoute>} />
+            <Route path="/dashboard" element={<ProtectedRoute><Dashboard user={user} onLogin={handleLogin} onLogout={handleLogout} /></ProtectedRoute>} />
+            <Route path="/admin" element={<ProtectedRoute><AdminDashboard user={user} onLogin={handleLogin} /></ProtectedRoute>} />
 
-            <Route path="/kyc" element={<KYC user={user} />} />
-            <Route path="/deposit" element={<DepositPage user={user} onLogin={handleLogin} onLogout={handleLogout} onUpdateUser={updateUser} />} />
+            <Route path="/kyc" element={<ProtectedRoute><KYC user={user} /></ProtectedRoute>} />
+            <Route path="/deposit" element={<ProtectedRoute><DepositPage user={user} onLogin={handleLogin} onLogout={handleLogout} onUpdateUser={updateUser} /></ProtectedRoute>} />
           </Routes>
         </main>
 

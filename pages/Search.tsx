@@ -11,7 +11,7 @@ interface SearchProps {
   onShowToast: (message: string) => void;
 }
 
-import { api } from '../services/api';
+import { fetchItems } from '../services/items';
 import { Item } from '../types';
 
 const Search: React.FC<SearchProps> = ({ user, onShowToast }) => {
@@ -37,17 +37,18 @@ const Search: React.FC<SearchProps> = ({ user, onShowToast }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchItems = async () => {
+    const loadItems = async () => {
       try {
-        const data = await api.getItems();
-        setItems(data);
+        const data = await fetchItems();
+        setItems(data || []);
       } catch (error) {
         console.error('Failed to load items', error);
+        setItems([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchItems();
+    loadItems();
   }, []);
 
   useEffect(() => {

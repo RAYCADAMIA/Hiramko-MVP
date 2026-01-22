@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, Zap } from 'lucide-react';
 import { CATEGORIES } from '../constants';
 import ItemCard from '../components/ItemCard';
-import { api } from '../services/api';
+import { fetchItems } from '../services/items';
 import { Item } from '../types';
 
 const Home: React.FC = () => {
@@ -13,17 +13,18 @@ const Home: React.FC = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fetchItems = async () => {
+    const loadItems = async () => {
       try {
-        const data = await api.getItems();
-        setItems(data);
+        const data = await fetchItems();
+        setItems(data || []);
       } catch (error) {
         console.error('Failed to load items', error);
+        setItems([]);
       } finally {
         setLoading(false);
       }
     };
-    fetchItems();
+    loadItems();
   }, []);
 
   const handleSearch = (e: React.FormEvent) => {
