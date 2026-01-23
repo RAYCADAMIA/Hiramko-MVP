@@ -58,6 +58,7 @@ export interface Item {
   depositAmount: number;
   logisticsType: LogisticsType;
   allowSurvey: boolean;
+  createdAt: string;
 }
 
 export enum RentalStatus {

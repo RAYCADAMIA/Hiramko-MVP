@@ -4,6 +4,7 @@ import { api } from '../services/api';
 import { Shield, AlertTriangle, XCircle, CheckCircle, Truck, Package, Search } from 'lucide-react';
 import { MOCK_ITEMS, MOCK_RENTALS } from '../constants';
 import Login from './Login';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface AdminDashboardProps {
     user: User | null;
@@ -12,6 +13,7 @@ interface AdminDashboardProps {
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogin }) => {
     const [activeTab, setActiveTab] = useState<'disputes' | 'riders' | 'moderation'>('disputes');
+    const { showNotification } = useNotification();
 
     if (!user || user.email !== 'admin@hiramko.com') {
         return (
@@ -75,16 +77,27 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ user, onLogin }) => {
 // --- Sub-Components ---
 
 const DisputesPanel = () => {
+    const { showNotification } = useNotification();
     // In real app, fetch from API. Mocking by filtering MOCK_RENTALS
     const [disputes, setDisputes] = useState<Rental[]>(MOCK_RENTALS.filter(r => r.status === RentalStatus.DISPUTED || r.escrowStatus === EscrowStatus.DISPUTED));
 
     const handleResolve = async (rentalId: string, decision: 'refund' | 'release_to_owner') => {
-        if (!confirm(`Are you sure you want to ${decision === 'refund' ? 'REFUND renter' : 'RELEASE funds to owner'}? This action is irreversible.`)) return;
-
-        await api.resolveDispute(rentalId, decision);
-        alert("Dispute resolved successfully.");
-        // Refresh list
-        setDisputes(prev => prev.filter(r => r.id !== rentalId));
+        showNotification({
+            title: 'Resolve Dispute?',
+            message: `Are you sure you want to ${decision === 'refund' ? 'REFUND renter' : 'RELEASE funds to owner'}? This action is irreversible.`,
+            type: 'warning',
+            confirmLabel: 'Yes, Resolve',
+            onConfirm: async () => {
+                await api.resolveDispute(rentalId, decision);
+                showNotification({
+                    title: 'Dispute Resolved',
+                    message: `Funds have been ${decision === 'refund' ? 'refunded' : 'released'} successfully.`,
+                    type: 'success'
+                });
+                // Refresh list
+                setDisputes(prev => prev.filter(r => r.id !== rentalId));
+            }
+        });
     };
 
     return (
@@ -196,14 +209,26 @@ const RidersPanel = () => {
 };
 
 const ModerationPanel = () => {
+    const { showNotification } = useNotification();
     const [items, setItems] = useState<Item[]>(MOCK_ITEMS);
     const [searchTerm, setSearchTerm] = useState("");
 
     const handleBlock = async (itemId: string) => {
-        if (!confirm("Block this item? It will be removed from search results.")) return;
-        await api.blockItem(itemId);
-        alert("Item blocked.");
-        setItems(prev => prev.filter(i => i.id !== itemId));
+        showNotification({
+            title: 'Block Item?',
+            message: 'Are you sure you want to block this item? It will be removed from search results and public view.',
+            type: 'warning',
+            confirmLabel: 'Block Item',
+            onConfirm: async () => {
+                await api.blockItem(itemId);
+                showNotification({
+                    title: 'Item Blocked',
+                    message: 'The item has been removed from public listings.',
+                    type: 'info'
+                });
+                setItems(prev => prev.filter(i => i.id !== itemId));
+            }
+        });
     };
 
     const filteredItems = items.filter(i => i.title.toLowerCase().includes(searchTerm.toLowerCase()));

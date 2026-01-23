@@ -5,12 +5,9 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Package, Star, Shield, Plus, Calendar, Settings, LogOut, Bell, CheckCircle, AlertCircle, Info, HelpCircle, Zap, HelpCircle as Help } from 'lucide-react';
 import ItemCard from '../components/ItemCard';
 import Login from './Login';
-import { getItemsByUser, updateItem, deleteItem } from '../services/items';
-import { getRentalsByUser, updateRentalStatus } from '../services/rentals';
-import { updateProfile } from '../services/user';
-import { getNotifications, markAsRead } from '../services/notifications';
-import { Notification } from '../types';
 import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface DashboardProps {
     user: User | null;
@@ -20,6 +17,8 @@ interface DashboardProps {
 }
 
 const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggleChat }) => {
+    const { refreshProfile } = useAuth();
+    const { showNotification } = useNotification();
     const location = useLocation();
     const navigate = useNavigate();
     const [showEscrowTooltip, setShowEscrowTooltip] = useState(false);
@@ -32,13 +31,13 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
         if (user) {
             setLoading(true);
             try {
-                const listings = await getItemsByUser(user.id);
+                const listings = await api.getMyItems(user.id);
                 setMyListings(listings);
 
-                const rentals = await getRentalsByUser(user.id);
+                const rentals = await api.getRentals(user.id);
                 setActiveRentals(rentals);
 
-                const notifs = await getNotifications(user.id);
+                const notifs = await api.getNotifications(user.id);
                 setNotifications(notifs);
             } catch (error) {
                 console.error("Error fetching dashboard data:", error);
@@ -56,8 +55,23 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
         const params = new URLSearchParams(location.search);
         if (params.get('payment_success') === 'true') {
             const rentalId = params.get('rentalId');
-            alert(`Payment Verified! Rental ${rentalId} is now Pending Owner Approval.`);
+            showNotification({
+                title: 'Payment Verified',
+                message: `Rental ${rentalId} is now Pending Owner Approval.`,
+                type: 'success'
+            });
             navigate('/dashboard', { replace: true });
+        }
+
+        // Auto-scroll to hash if present (e.g., #my-listings)
+        if (location.hash) {
+            const id = location.hash.substring(1);
+            setTimeout(() => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                }
+            }, 500); // Small delay to ensure items are rendered
         }
     }, [location, navigate]);
 
@@ -78,15 +92,35 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
     const [reviewComment, setReviewComment] = useState('');
 
     const handleConfirmReturn = async (rentalId: string) => {
-        if (!confirm("Confirm that the item has been returned in good condition? This will release the escrowed funds.")) return;
-        const result = await api.confirmReturn(rentalId, 5, false);
-        if (result.success) {
-            alert("Return confirmed! Funds released. Please leave a review.");
-            // Trigger Review Modal immediately for Owner
-            setSelectedRentalId(rentalId);
-            setIsReviewModalOpen(true);
-            // Ideally trigger refresh here
-        }
+        showNotification({
+            title: 'Confirm Return',
+            message: 'Are you sure the item has been returned in good condition? This will release the escrowed funds back to the renter.',
+            type: 'warning',
+            confirmText: 'Yes, Confirm Return',
+            onConfirm: async () => {
+                try {
+                    const result = await api.confirmReturn(rentalId, 5, false);
+                    if (result.success) {
+                        showNotification({
+                            title: 'Return Complete',
+                            message: 'Escrow funds have been released to the renter.',
+                            type: 'success'
+                        });
+                        await refreshProfile();
+                        fetchDashboardData();
+                        // Trigger Review Modal immediately
+                        setSelectedRentalId(rentalId);
+                        setIsReviewModalOpen(true);
+                    }
+                } catch (err: any) {
+                    showNotification({
+                        title: 'Error',
+                        message: err.message || "Failed to confirm return",
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     // ... handleDispute ...
@@ -108,26 +142,56 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
             comment: reviewComment
         });
 
-        alert("Review submitted! Thank you.");
+        showNotification({
+            title: 'Review Posted',
+            message: 'Thank you for your feedback! Your review helps build a trust-based community.',
+            type: 'success'
+        });
         setIsReviewModalOpen(false);
         setReviewComment('');
         setReviewRating(5);
     };
 
     const handleDispute = async (rentalId: string) => {
+        // Simple prompt replacement for now, though a custom modal would be better
         const reason = prompt("Please describe the issue (e.g. Item damaged, Late return):");
         if (reason) {
             await api.fileDispute(rentalId, reason);
-            alert("Dispute filed. Admin will review.");
+            showNotification({
+                title: 'Dispute Filed',
+                message: 'Admin will review the case within 24-48 hours. Escrow funds are frozen.',
+                type: 'warning'
+            });
             fetchDashboardData();
         }
     };
 
     const handleApproveRental = async (rentalId: string) => {
-        if (!confirm("Confirm that you have received the payment?")) return;
-        await api.confirmPayment(rentalId); // Updates payment to 'paid' and status to 'active'
-        alert("Payment verified and rental approved! User has been notified.");
-        fetchDashboardData();
+        showNotification({
+            title: 'Approve Rental',
+            message: 'Have you received the payment from the renter? Once approved, the security deposit will be secured in escrow.',
+            type: 'info',
+            confirmText: 'Verify & Approve',
+            onConfirm: async () => {
+                try {
+                    await api.confirmPayment(rentalId);
+                    showNotification({
+                        title: 'Payment Secured',
+                        message: 'Verification successful! Deposit has been secured in Escrow.',
+                        type: 'success'
+                    });
+                    await refreshProfile();
+                    fetchDashboardData();
+                } catch (err: any) {
+                    console.error(err);
+                    showNotification({
+                        title: 'Verification Failed',
+                        message: err.message || "Failed to approve rental. Check if renter has enough escrow balance.",
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     const handleDeclineRental = async (rentalId: string) => {
@@ -177,7 +241,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                                 onMouseLeave={() => setShowEscrowTooltip(false)}
                             >
                                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                                <span className="text-xs text-slate-300 font-mono">Escrow: <span className="text-white font-bold">₱0.00</span></span>
+                                <span className="text-xs text-slate-300 font-mono">Escrow: <span className="text-white font-bold">₱{(user.escrowBalance || 0).toLocaleString()}</span></span>
                                 <HelpCircle className="w-3 h-3 text-slate-500 cursor-help" />
 
                                 {showEscrowTooltip && (
@@ -411,7 +475,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                                 )}
                             </div>
 
-                            <div className="space-y-4 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 custom-scrollbar">
                                 {notifications.length === 0 ? (
                                     <p className="text-center text-slate-500 py-8 text-sm italic">No notifications yet.</p>
                                 ) : (
@@ -420,20 +484,24 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                                             to={notif.link || "#"}
                                             key={notif.id}
                                             onClick={() => {
-                                                if (!notif.read) markAsRead(notif.id);
+                                                if (!notif.read) api.markAsRead(notif.id);
                                             }}
-                                            className={`block p-4 rounded-xl border transition hover:border-cyan-500/30 cursor-pointer ${notif.read ? 'bg-slate-900/30 border-slate-800' : 'bg-slate-800/50 border-slate-700 shadow-lg shadow-cyan-900/5 border-cyan-500/20'}`}
+                                            className={`group relative flex gap-4 p-4 rounded-2xl transition-all duration-300 border ${notif.read ? 'bg-slate-900/20 border-slate-800/50 grayscale-[0.5] opacity-70' : 'bg-slate-800/40 border-slate-700/50 hover:border-cyan-500/30 active:scale-[0.98]'}`}
                                         >
-                                            <div className="flex gap-3">
-                                                <div className="mt-1">
-                                                    {notif.type === 'SUCCESS' && <CheckCircle className="w-4 h-4 text-green-400" />}
-                                                    {(notif.type === 'ALERT' || notif.type === 'RENTAL_REQUEST') && <AlertCircle className="w-4 h-4 text-yellow-400" />}
-                                                    {notif.type === 'INFO' && <Info className="w-4 h-4 text-blue-400" />}
-                                                </div>
-                                                <div>
-                                                    <h4 className={`text-sm font-bold ${notif.read ? 'text-slate-400' : 'text-white'}`}>{notif.title}</h4>
-                                                    <p className="text-xs text-slate-400 mt-1 leading-relaxed line-clamp-2">{notif.message}</p>
-                                                    <p className="text-[10px] text-slate-500 mt-2 font-medium">{notif.time}</p>
+                                            {!notif.read && (
+                                                <div className="absolute top-4 right-4 w-2 h-2 bg-cyan-400 rounded-full animate-pulse shadow-[0_0_8px_rgba(34,211,238,0.5)]"></div>
+                                            )}
+                                            <div className={`flex-shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${notif.read ? 'bg-slate-800 text-slate-500' : 'bg-slate-900 text-cyan-400 border border-slate-800'}`}>
+                                                {notif.type === 'SUCCESS' && <CheckCircle className="w-5 h-5" />}
+                                                {(notif.type === 'ALERT' || notif.type === 'RENTAL_REQUEST') && <AlertCircle className="w-5 h-5 text-yellow-400" />}
+                                                {notif.type === 'INFO' && <Info className="w-5 h-5" />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className={`text-xs font-bold uppercase tracking-wider mb-1 ${notif.read ? 'text-slate-500' : 'text-slate-200'}`}>{notif.title}</h4>
+                                                <p className={`text-sm leading-snug ${notif.read ? 'text-slate-500' : 'text-slate-400'}`}>{notif.message}</p>
+                                                <div className="flex items-center gap-2 mt-2">
+                                                    <div className="w-4 border-t border-slate-800/60"></div>
+                                                    <span className="text-[10px] font-mono text-slate-600 uppercase">{notif.time}</span>
                                                 </div>
                                             </div>
                                         </Link>
@@ -444,7 +512,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
                             {notifications.length > 0 && notifications.some(n => !n.read) && (
                                 <button
                                     onClick={async () => {
-                                        await Promise.all(notifications.filter(n => !n.read).map(n => markAsRead(n.id)));
+                                        await Promise.all(notifications.filter(n => !n.read).map(n => api.markAsRead(n.id)));
                                         fetchDashboardData();
                                     }}
                                     className="w-full mt-6 py-2 text-xs font-bold text-cyan-400 hover:text-cyan-300 transition border-t border-slate-800/50 uppercase tracking-wider"

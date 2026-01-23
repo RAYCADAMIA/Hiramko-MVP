@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Shield, Upload, Camera, CheckCircle, ChevronLeft, AlertCircle } from 'lucide-react';
 import { supabase } from '../services/supabase';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 import { User } from '../types';
 
@@ -17,6 +18,7 @@ const KYC: React.FC<KYCProps> = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     const { user, refreshProfile } = useAuth();
+    const { showNotification } = useNotification();
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -37,7 +39,11 @@ const KYC: React.FC<KYCProps> = () => {
             setStep(4); // Success step
         } catch (error) {
             console.error('KYC Failed:', error);
-            alert('Verification failed. Please try again.');
+            showNotification({
+                title: 'Verification Failed',
+                message: 'We couldn’t process your identity documents. Please ensure images are clear and try again.',
+                type: 'error'
+            });
         } finally {
             setIsSubmitting(false);
         }

@@ -29,10 +29,10 @@ export const generateItemDescription = async (
       contents: prompt,
     });
 
-    return response.text || "Could not generate description. Please try again.";
-  } catch (error) {
-    console.error("Error generating description:", error);
-    return "Error generating description. Please check your API key and connection.";
+    return response.text || `This is a high-quality ${title} in ${condition} condition. Key features include: ${keyFeatures}. Perfect for rental use!`;
+  } catch (error: any) {
+    console.warn("AI Generation offline (likely API Key issue), using template:", error.message);
+    return `This professional ${title} is currently available for rent. It is in ${condition} condition and features ${keyFeatures}. Please contact the owner for more specifics or to arrange a pickup.`;
   }
 };
 

@@ -170,7 +170,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 150,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2023-07-15T08:00:00Z'
     },
     {
       id: 'i2',
@@ -185,7 +186,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 150,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2023-08-02T10:30:00Z'
     },
     {
       id: 'i3',
@@ -200,7 +202,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 100,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2023-09-10T14:20:00Z'
     },
     {
       id: 'i4',
@@ -215,7 +218,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 200,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2023-10-05T09:15:00Z'
     },
     {
       id: 'i5',
@@ -230,7 +234,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 100,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2023-11-12T16:45:00Z'
     },
     {
       id: 'i6',
@@ -245,7 +250,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 200,
       logisticsType: LogisticsType.MEDIUM_HEAVY,
-      allowSurvey: true
+      allowSurvey: true,
+      createdAt: '2023-12-01T11:00:00Z'
     },
     {
       id: 'i7',
@@ -260,7 +266,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 120,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2024-01-10T13:30:00Z'
     },
     {
       id: 'i8',
@@ -275,7 +282,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 150,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: '2024-02-15T15:20:00Z'
     },
     {
       id: 'i9',
@@ -290,7 +298,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 180,
       logisticsType: LogisticsType.OWNER_DELIVERY,
-      allowSurvey: true
+      allowSurvey: true,
+      createdAt: '2024-03-01T10:00:00Z'
     },
     {
       id: 'i10',
@@ -305,7 +314,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 200,
       logisticsType: LogisticsType.OWNER_DELIVERY,
-      allowSurvey: true
+      allowSurvey: true,
+      createdAt: '2024-03-20T09:00:00Z'
     },
     {
       id: 'i11',
@@ -320,7 +330,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 200,
       logisticsType: LogisticsType.OWNER_DELIVERY,
-      allowSurvey: true
+      allowSurvey: true,
+      createdAt: '2024-04-05T14:30:00Z'
     },
     {
       id: 'i12',
@@ -335,7 +346,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: 180,
       logisticsType: LogisticsType.OWNER_DELIVERY,
-      allowSurvey: true
+      allowSurvey: true,
+      createdAt: '2024-04-12T11:20:00Z'
     }
   ];
 
@@ -365,7 +377,8 @@ const generateItems = (): Item[] => {
       isAvailable: true,
       depositAmount: Math.floor(Math.random() * 100) + 50,
       logisticsType: LogisticsType.LIGHT,
-      allowSurvey: false
+      allowSurvey: false,
+      createdAt: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString()
     });
   }
 
@@ -374,8 +387,9 @@ const generateItems = (): Item[] => {
 
 export const MOCK_ITEMS = generateItems();
 
-// Custom order: Cameras, Vehicles, Dormitels, Properties, Clothing, ... Others
+// Custom order: All, Cameras, Vehicles, Dormitels, Properties, Clothing, ... Others
 export const CATEGORIES = [
+  'All',
   ItemCategory.CAMERAS,
   ItemCategory.VEHICLES,
   ItemCategory.DORMITELS,

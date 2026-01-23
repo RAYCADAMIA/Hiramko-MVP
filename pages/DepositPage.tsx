@@ -4,6 +4,9 @@ import { ArrowLeft, Shield, CreditCard, Wallet, CheckCircle } from 'lucide-react
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import { User } from '../types';
+import { api } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 
 interface DepositPageProps {
     user: User | null;
@@ -12,34 +15,39 @@ interface DepositPageProps {
     onUpdateUser: (updates: Partial<User>) => void;
 }
 
-const DepositPage: React.FC<DepositPageProps> = ({ user, onLogin, onLogout, onUpdateUser }) => {
+const DepositPage: React.FC = () => {
+    const { user, refreshProfile, onLogout } = useAuth() as any;
+    const { showNotification } = useNotification();
     const navigate = useNavigate();
     const [amount, setAmount] = useState<string>('');
     const [isProcessing, setIsProcessing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
 
-    const handleDeposit = (e: React.FormEvent) => {
+    const handleDeposit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!amount) return;
+        if (!amount || !user) return;
 
         setIsProcessing(true);
 
-        // Simulate API call
-        setTimeout(() => {
-            setIsProcessing(false);
+        try {
+            await api.topUpEscrow(user.id, parseFloat(amount));
             setIsSuccess(true);
-
-            // Update user balance
-            if (user) {
-                const currentBalance = user.escrowBalance || 0;
-                onUpdateUser({ escrowBalance: currentBalance + parseFloat(amount) });
-            }
+            await refreshProfile();
 
             // Navigate back after a delay
             setTimeout(() => {
                 navigate(-1);
             }, 2000);
-        }, 1500);
+        } catch (err) {
+            console.error("Deposit failed:", err);
+            showNotification({
+                title: 'Deposit Failed',
+                message: 'We were unable to process your deposit at this time. Please check your payment details and try again.',
+                type: 'error'
+            });
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     if (!user) {

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { MOCK_CONVERSATIONS, MOCK_USERS } from '../constants';
 import { Send, MoreVertical, Phone, Video, Search, Paperclip, Loader2, MessageCircle } from 'lucide-react';
-import { User, UserType, Conversation } from '../types';
-import { getConversations, sendMessage } from '../services/messages';
+import { User, UserType, Conversation, ChatMessage } from '../types';
+import { api } from '../services/api';
 import { generateChatResponse } from '../services/geminiService';
 
 interface MessagesProps {
@@ -34,9 +34,16 @@ const Messages: React.FC<MessagesProps> = ({ user }) => {
     useEffect(() => {
         const fetchConvs = async () => {
             if (user) {
-                const data = await getConversations(user.id);
+                const data = await api.getConversations(user.id);
                 setConversations(data);
-                if (data.length > 0 && !activeConversationId) {
+
+                // Check for ?conv= in URL
+                const query = new URLSearchParams(window.location.search);
+                const convId = query.get('conv');
+
+                if (convId) {
+                    setActiveConversationId(convId);
+                } else if (data.length > 0 && !activeConversationId) {
                     setActiveConversationId(data[0].id);
                 }
             }
@@ -59,7 +66,7 @@ const Messages: React.FC<MessagesProps> = ({ user }) => {
 
         try {
             // 1. Persist to Supabase
-            const { data: userMsg, error } = await sendMessage(activeConversation.id, currentUser.id, msgText);
+            const { data: userMsg, error } = await api.sendChatMessage(activeConversation.id, currentUser.id, msgText);
             if (error) throw error;
 
             if (userMsg) {
@@ -86,7 +93,7 @@ const Messages: React.FC<MessagesProps> = ({ user }) => {
             const aiReplyText = await generateChatResponse(otherParticipant.name, msgText, history);
 
             // Persist AI Message to Supabase
-            const { data: aiMsg, error: aiError } = await sendMessage(activeConversation.id, otherParticipant.id, aiReplyText);
+            const { data: aiMsg, error: aiError } = await api.sendChatMessage(activeConversation.id, otherParticipant.id, aiReplyText);
 
             setIsTyping(false);
 

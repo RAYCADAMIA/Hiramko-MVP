@@ -2,16 +2,18 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Search, PlusCircle, Menu, X, Package, MessageSquare, User as UserIcon, Bell } from 'lucide-react';
 import { getNotifications, markAsRead } from '../services/notifications';
-import { User, Notification, NotificationType } from '../types';
+import { User, Notification } from '../types';
 import Logo from './Logo';
+
+import { useNotification } from '../contexts/NotificationContext';
 
 interface NavbarProps {
   user: User | null;
-  onShowToast: (message: string) => void;
   onToggleChat?: () => void;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
+const Navbar: React.FC<NavbarProps> = ({ user, onToggleChat }) => {
+  const { showNotification } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const [navSearchTerm, setNavSearchTerm] = useState('');
   const [isSearchExpanded, setIsSearchExpanded] = useState(false);
@@ -42,8 +44,6 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
 
   const isActive = (path: string) => location.pathname === path ? "text-cyan-400 font-semibold drop-shadow-[0_0_5px_rgba(34,211,238,0.5)]" : "text-slate-400 hover:text-cyan-400 transition-colors";
 
-  const guestAvatar = "https://ui-avatars.com/api/?name=Guest&background=1e293b&color=94a3b8";
-
   // Close notification dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -73,7 +73,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
   const handleAuthAction = (e: React.MouseEvent, path: string) => {
     if (!user) {
       e.preventDefault();
-      onShowToast("You need to log in first");
+      showNotification({
+        title: 'Login Required',
+        message: 'You need to log in first to access this feature.',
+        type: 'info'
+      });
       navigate('/login', { state: { from: location.pathname } });
       setIsOpen(false);
     } else {
@@ -136,7 +140,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
                 if (onToggleChat) {
                   e.preventDefault();
                   if (!user) {
-                    onShowToast("Please log in to chat");
+                    showNotification({
+                      title: 'Login Required',
+                      message: 'Please log in to chat with owners.',
+                      type: 'info'
+                    });
                     return;
                   }
                   onToggleChat();
@@ -144,12 +152,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
                   handleAuthAction(e, '/messages');
                 }
               }}
-              className={`flex items-center gap-2.5 text-sm font-semibold transition-all duration-300 hover:scale-105 ${isActive('/messages')}`}
+              className={`transition-all duration-300 hover:scale-105 group ${isActive('/messages')}`}
             >
               <div className="w-9 h-9 flex items-center justify-center rounded-xl bg-slate-900 border border-slate-800 text-slate-400 group-hover:text-cyan-400 group-hover:border-cyan-500/30 transition-all">
                 <MessageSquare className="w-4.5 h-4.5" />
               </div>
-              <span className="hidden lg:inline">Chat</span>
             </button>
 
             {/* Notification Icon */}
@@ -157,7 +164,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
               <button
                 onClick={() => {
                   if (!user) {
-                    onShowToast("You need to log in first");
+                    showNotification({
+                      title: 'Login Required',
+                      message: 'You need to log in first to view notifications.',
+                      type: 'info'
+                    });
                     navigate('/login', { state: { from: location.pathname } });
                   } else {
                     setIsNotifOpen(!isNotifOpen);
@@ -297,7 +308,11 @@ const Navbar: React.FC<NavbarProps> = ({ user, onShowToast, onToggleChat }) => {
                 if (onToggleChat) {
                   e.preventDefault();
                   if (!user) {
-                    onShowToast("Please log in to chat");
+                    showNotification({
+                      title: 'Login Required',
+                      message: 'Please log in to chat.',
+                      type: 'info'
+                    });
                     return;
                   }
                   onToggleChat();

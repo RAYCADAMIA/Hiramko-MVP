@@ -3,6 +3,7 @@ import { useParams, useSearchParams, useNavigate, Link } from 'react-router-dom'
 import { ShieldCheck, CreditCard, ArrowRight, Lock, CheckCircle2, Loader2, AlertTriangle, ChevronLeft } from 'lucide-react';
 import { api } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
+import { useNotification } from '../contexts/NotificationContext';
 import { Item, Rental } from '../types';
 
 const Checkout: React.FC = () => {
@@ -10,6 +11,7 @@ const Checkout: React.FC = () => {
     const [searchParams] = useSearchParams();
     const navigate = useNavigate();
     const { user } = useAuth();
+    const { showNotification } = useNotification();
 
     const [item, setItem] = useState<Item | null>(null);
     const [loading, setLoading] = useState(true);
@@ -80,7 +82,12 @@ const Checkout: React.FC = () => {
             setPaymentSuccess(true);
         } catch (error) {
             console.error(error);
-            alert("Payment submission failed. Please try again.");
+            showNotification({
+                title: 'Submission Error',
+                message: 'We couldn’t process your payment proof. Please check your connection and try again.',
+                type: 'error',
+                confirmText: 'Got it'
+            });
         } finally {
             setProcessing(false);
         }
@@ -160,7 +167,7 @@ const Checkout: React.FC = () => {
                                 <span>Self Pickup / Owner Delivery</span>
                                 <span>Free / Via Chat</span>
                             </div>
-                            <div className="h-px bg-slate-800 my-2"></div>
+                            <div className="border-t border-slate-800/60 my-2"></div>
                             <div className="flex justify-between text-white font-bold text-lg">
                                 <span>Grand Total</span>
                                 <span>₱{grandTotal.toLocaleString()}</span>

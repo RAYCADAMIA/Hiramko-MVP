@@ -19,15 +19,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const fetchProfile = async (userId: string, email: string) => {
         try {
-            const { data, error } = await supabase
+            let { data, error } = await supabase
                 .from('profiles')
                 .select('*')
                 .eq('id', userId)
                 .single();
 
-            if (error) {
-                console.error('Error fetching profile:', error);
-                return null;
+            // If profile doesn't exist, create it (common for new OAuth users)
+            if (error && error.code === 'PGRST116') {
+                const { data: newData, error: createError } = await supabase
+                    .from('profiles')
+                    .insert({
+                        id: userId,
+                        full_name: email.split('@')[0],
+                        email: email,
+                        avatar_url: `https://api.dicebear.com/7.x/avataaars/svg?seed=${userId}`,
+                        user_type: UserType.REGULAR,
+                        location: 'Davao City',
+                        rating: 5.0,
+                        reviews_count: 0,
+                        is_verified: false,
+                        is_shop: false,
+                        joined_date: new Date().toISOString()
+                    })
+                    .select()
+                    .single();
+
+                if (createError) throw createError;
+                data = newData;
+            } else if (error) {
+                throw error;
             }
 
             if (data) {
@@ -44,7 +65,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                     joinedDate: data.joined_date ? new Date(data.joined_date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
                     verified: !!data.is_verified,
                     isShop: !!data.is_shop,
-                    escrowBalance: 0,
+                    escrowBalance: Number(data.escrow_balance) || 0,
                 };
                 setUser(appUser);
             }
@@ -117,9 +138,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     };
 
     const signInWithGoogle = async () => {
-        await supabase.auth.signInWithOAuth({
+        const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
+            options: {
+                redirectTo: window.location.origin
+            }
         });
+        if (error) console.error('OAuth Error:', error.message);
     };
 
     const signOut = async () => {

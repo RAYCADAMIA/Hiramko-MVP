@@ -6,15 +6,17 @@ import { Search as SearchIcon, SlidersHorizontal, PlusCircle, Frown, Sparkles, S
 import { getSmartSearchSuggestions } from '../services/geminiService';
 import { User, LogisticsType } from '../types';
 
+import { useNotification } from '../contexts/NotificationContext';
+
 interface SearchProps {
   user: User | null;
-  onShowToast: (message: string) => void;
 }
 
-import { fetchItems } from '../services/items';
+import { api } from '../services/api';
 import { Item } from '../types';
 
-const Search: React.FC<SearchProps> = ({ user, onShowToast }) => {
+const Search: React.FC<SearchProps> = ({ user }) => {
+  const { showNotification } = useNotification();
   const { search } = useLocation();
   const navigate = useNavigate();
   const queryParams = new URLSearchParams(search);
@@ -39,7 +41,7 @@ const Search: React.FC<SearchProps> = ({ user, onShowToast }) => {
   useEffect(() => {
     const loadItems = async () => {
       try {
-        const data = await fetchItems();
+        const data = await api.getItems();
         setItems(data || []);
       } catch (error) {
         console.error('Failed to load items', error);
