@@ -195,10 +195,29 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onLogout, onLogin, onToggle
     };
 
     const handleDeclineRental = async (rentalId: string) => {
-        if (!confirm("Decline this rental request? Funds will be refunded to the renter.")) return;
-        await api.updateRentalStatus(rentalId, RentalStatus.RETURN_INITIATED); // Reusing status for prototype
-        alert("Rental declined.");
-        fetchDashboardData();
+        showNotification({
+            title: 'Decline Rental',
+            message: 'Are you sure you want to decline this rental request? The funds will be refunded to the renter.',
+            type: 'warning',
+            confirmText: 'Decline Request',
+            onConfirm: async () => {
+                try {
+                    await api.updateRentalStatus(rentalId, RentalStatus.RETURN_INITIATED); // Reusing status for prototype
+                    showNotification({
+                        title: 'Request Declined',
+                        message: 'The rental request has been declined and the renter notified.',
+                        type: 'info'
+                    });
+                    fetchDashboardData();
+                } catch (err) {
+                    showNotification({
+                        title: 'Error',
+                        message: 'Failed to decline rental. Please try again.',
+                        type: 'error'
+                    });
+                }
+            }
+        });
     };
 
     return (

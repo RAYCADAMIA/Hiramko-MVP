@@ -326,7 +326,14 @@ const PostItem: React.FC = () => {
                   <label className="text-sm font-bold text-slate-300 ml-1">Description <span className="text-red-500">*</span></label>
                   <button
                     onClick={async () => {
-                      if (!title) return alert("Add a title first!");
+                      if (!title) {
+                        showNotification({
+                          title: 'Requirement',
+                          message: 'Please add a title first before using AI generation.',
+                          type: 'warning'
+                        });
+                        return;
+                      }
                       setIsGenerating(true);
                       const desc = await generateItemDescription(title, category, condition, "");
                       setDescription(desc);
