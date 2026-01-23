@@ -9,14 +9,15 @@ create table public.profiles (
   full_name text,
   avatar_url text,
   location text, -- Important for PH context (e.g., "Davao City", "Makati")
-  user_type text default 'BASIC', -- 'BASIC', 'PREMIUM', 'VERIFIED_SHOP'
+  user_type text default 'REGULAR', -- 'REGULAR', 'PREMIUM', 'VERIFIED_SHOP'
   is_verified boolean default false,
   is_shop boolean default false,
   rating numeric default 5.0,
   reviews_count integer default 0,
-  joined_date timestamptz default now(),
-  
-  constraint username_length check (char_length(full_name) >= 3)
+  escrow_balance numeric default 0,
+  gcash_number text,
+  gcash_name text,
+  joined_date timestamptz default now()
 );
 
 -- Turn on Row Level Security (RLS)
@@ -77,9 +78,12 @@ create table public.rentals (
   start_date timestamptz not null,
   end_date timestamptz not null,
   total_price numeric not null,
-  status text default 'PENDING', -- 'PENDING', 'APPROVED', 'ACTIVE', 'COMPLETED', 'CANCELLED'
+  status text default 'PENDING', -- 'PENDING', 'APPROVED', 'ACTIVE', 'COMPLETED', 'CANCELLED', 'DISPUTED'
   delivery_method text default 'pickup', -- 'pickup', 'meetup', 'delivery'
   payment_status text default 'unpaid', -- 'unpaid', 'paid', 'refunded'
+  payment_proof_url text,
+  escrow_status text default 'HELD', -- 'HELD', 'RELEASED', 'REFUNDED', 'DISPUTED'
+  dispute_reason text,
   created_at timestamptz default now()
 );
 
@@ -133,6 +137,25 @@ create policy "Users can insert messages" on messages
   for insert with check (auth.uid() = sender_id);
 
 
--- 5. STORAGE BUCKETS (Script to run in Storage SQL Editor or via UI manually)
+create table public.notifications (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references public.profiles(id) on delete cascade not null,
+  type text not null, -- 'info', 'success', 'warning', 'error'
+  title text not null,
+  message text not null,
+  link text,
+  is_read boolean default false,
+  created_at timestamptz default now()
+);
+
+alter table public.notifications enable row level security;
+
+create policy "Users can view their own notifications" on notifications
+  for select using (auth.uid() = user_id);
+
+create policy "Users can update their own notifications" on notifications
+  for update using (auth.uid() = user_id);
+
+-- 5. STORAGE BUCKETS
 -- insert into storage.buckets (id, name, public) values ('avatars', 'avatars', true);
 -- insert into storage.buckets (id, name, public) values ('item-images', 'item-images', true);

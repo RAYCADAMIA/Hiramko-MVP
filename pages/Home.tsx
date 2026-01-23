@@ -113,8 +113,8 @@ const Home: React.FC = () => {
                                 key={category}
                                 onClick={() => setSelectedCategory(category)}
                                 className={`whitespace-nowrap px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 border ${selectedCategory === category
-                                        ? 'bg-cyan-600 text-white border-cyan-400 shadow-[0_0_15px_rgba(8,145,178,0.3)]'
-                                        : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                                    ? 'bg-cyan-600 text-white border-cyan-400 shadow-[0_0_15px_rgba(8,145,178,0.3)]'
+                                    : 'bg-slate-900/50 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
                                     }`}
                             >
                                 {category}
@@ -142,20 +142,41 @@ const Home: React.FC = () => {
                             <ItemCard key={item.id} item={item} />
                         ))}
                         {filteredItems.length === 0 && (
-                            <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-4">
-                                <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
-                                    <Search className="w-6 h-6 text-slate-600" />
-                                </div>
-                                <div>
-                                    <h3 className="text-white font-bold text-lg">No items match your search</h3>
-                                    <p className="text-slate-500 text-sm">Explore other categories or try different keywords.</p>
-                                </div>
-                                <button
-                                    onClick={() => { setSelectedCategory('All'); setSearchTerm(''); }}
-                                    className="bg-cyan-600/10 text-cyan-400 border border-cyan-500/20 px-6 py-2 rounded-xl text-sm font-bold hover:bg-cyan-600/20 transition"
-                                >
-                                    Clear All
-                                </button>
+                            <div className="col-span-full py-32 flex flex-col items-center justify-center text-center space-y-6">
+                                {items.length === 0 ? (
+                                    <>
+                                        <div className="w-24 h-24 bg-cyan-500/10 rounded-[2rem] flex items-center justify-center border border-cyan-500/20 relative group">
+                                            <div className="absolute inset-0 bg-cyan-500/20 blur-2xl rounded-full opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                            <Zap className="w-10 h-10 text-cyan-400 relative z-10 animate-pulse" />
+                                        </div>
+                                        <div className="max-w-md">
+                                            <h3 className="text-3xl font-black text-white mb-2 font-display">No items listed yet</h3>
+                                            <p className="text-slate-400 text-lg">Be the first player to list an item in your area and start earning today!</p>
+                                        </div>
+                                        <Link
+                                            to="/post"
+                                            className="bg-cyan-600 hover:bg-cyan-500 text-white px-10 py-5 rounded-[2rem] font-black uppercase tracking-widest text-lg transition-all shadow-xl shadow-cyan-900/20 active:scale-95"
+                                        >
+                                            Post Item Now
+                                        </Link>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="w-16 h-16 bg-slate-900 rounded-full flex items-center justify-center border border-slate-800">
+                                            <Search className="w-6 h-6 text-slate-600" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-white font-bold text-lg">No items match your search</h3>
+                                            <p className="text-slate-500 text-sm">Explore other categories or try different keywords.</p>
+                                        </div>
+                                        <button
+                                            onClick={() => { setSelectedCategory('All'); setSearchTerm(''); }}
+                                            className="bg-cyan-600/10 text-cyan-400 border border-cyan-500/20 px-6 py-2 rounded-xl text-sm font-bold hover:bg-cyan-600/20 transition"
+                                        >
+                                            Clear All
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         )}
                     </div>

@@ -275,38 +275,60 @@ const Search: React.FC<SearchProps> = ({ user }) => {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-20 text-center bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed">
-              {isLikelyGibberish(searchTerm) ? (
+            <div className="flex flex-col items-center justify-center py-20 text-center bg-slate-900/30 rounded-3xl border border-slate-800 border-dashed space-y-6">
+              {items.length === 0 ? (
                 <>
-                  <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mb-6">
+                  <div className="w-20 h-20 bg-cyan-900/20 rounded-2xl flex items-center justify-center animate-pulse border border-cyan-500/20">
+                    <Sparkles className="w-10 h-10 text-cyan-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-black text-white mb-2">The catalog is empty</h3>
+                    <p className="text-slate-400 max-w-sm">
+                      Be the pioneer! List the very first item on HiramKo and lead the marketplace.
+                    </p>
+                  </div>
+                  <Link
+                    to="/post"
+                    className="bg-cyan-600 hover:bg-cyan-500 text-white px-8 py-3 rounded-xl font-bold transition shadow-lg shadow-cyan-900/20"
+                  >
+                    Post an Item
+                  </Link>
+                </>
+              ) : isLikelyGibberish(searchTerm) ? (
+                <>
+                  <div className="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center">
                     <SearchX className="w-10 h-10 text-slate-500" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Hmm, that looks like a typo</h3>
-                  <p className="text-slate-400 max-w-md mb-8">
-                    We couldn't find anything for "{searchTerm}". Did you mean to type "Camera", "Drill", or "Tent"?
-                  </p>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-2">Hmm, that looks like a typo</h3>
+                    <p className="text-slate-400 max-w-md">
+                      We couldn't find anything for "{searchTerm}". Did you mean to type "Camera", "Drill", or "Tent"?
+                    </p>
+                  </div>
                 </>
               ) : (
                 <>
-                  <div className="w-20 h-20 bg-cyan-900/20 rounded-full flex items-center justify-center mb-6 animate-pulse">
+                  <div className="w-20 h-20 bg-cyan-900/20 rounded-full flex items-center justify-center">
                     <Sparkles className="w-10 h-10 text-cyan-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">No results for this combination</h3>
-                  <p className="text-slate-400 max-w-md mb-8">
-                    Try adjusting your filters or search term to see more results.
-                  </p>
-                  <button
-                    onClick={() => {
-                      setSearchTerm('');
-                      setSelectedCategory('All');
-                      setMinPrice(0);
-                      setMaxPrice(10000);
-                      setLogisticsFilter('All');
-                    }}
-                    className="text-cyan-400 hover:underline"
-                  >
-                    Clear all filters
-                  </button>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white mb-2">No results for this combination</h3>
+                    <p className="text-slate-400 max-w-md mb-4">
+                      Try adjusting your filters or search term to see more results.
+                    </p>
+                    <button
+                      onClick={() => {
+                        setSearchTerm('');
+                        setSelectedCategory('All');
+                        setMinPrice(0);
+                        setMaxPrice(10000);
+                        setLogisticsFilter('All');
+                      }}
+                      className="text-cyan-400 hover:underline font-bold"
+                    >
+                      Clear all filters
+                    </button>
+                  </div>
                 </>
               )}
             </div>
